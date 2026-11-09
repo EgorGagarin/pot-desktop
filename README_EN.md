@@ -16,7 +16,7 @@
 <hr/>
 <div align="center">
 
-<h3><a href='./README.md'>中文</a> | English | <a href='./README_KR.md'> 한글 </a></h3>
+<h3><a href='./README_CH.md'>中文</a> | English | <a href='./README.md'>Русский</a> | <a href='./README_KR.md'> 한글 </a></h3>
 
 <table>
 <tr>
@@ -157,7 +157,7 @@ The file extension of pot plugin is `.potext`. After downloading the `.potext` f
 
 -   The specified module could not be found (Windows)
 
-    Errors like this occur because the system lacks C++ libraries，Go to [here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022) download and install it.
+    Errors like this occur because the system lacks C++ libraries. Go to [here](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022) download and install it.
 
 -   Not a valid Win32 application (Windows)
 
@@ -191,13 +191,13 @@ winget install Pylogmon.pot
 
 2. Double click the downloaded file to install it.
 
-### 故障排除
+### Troubleshooting
 
 -   There is no interface after startup, and there is no response when clicking the tray icon.
 
-    Check if WebView2 is uninstalled/disabled, if so, install WebView2 manually or restore it.
+    Check if WebView2 is uninstalled/disabled. If so, install WebView2 manually or restore it.
 
-    If the enterprise edition system is inconvenient to install or cannot install WebView2, please try to download the fix WebView2 version `pot_{version} at [Release](https://github.com/pot-app/pot-desktop/releases/latest) _{arch}_fix_webview2_runtime-setup.exe`
+    If installing WebView2 is inconvenient or impossible on an enterprise edition system, try downloading the version with the built-in WebView2 runtime, `pot_{version}_{arch}_fix_webview2_runtime-setup.exe`, from the [Release](https://github.com/pot-app/pot-desktop/releases/latest) page.
 
     If the issue persists, please try starting in Windows 7 compatibility mode.
 
@@ -234,21 +234,25 @@ brew upgrade --cask pot
 
     Click the Cancel button, then go to the Settings -> Privacy and Security page, click the Still Open button, and then click the Open button in the pop-up window. After that, there will be no more pop-up warnings when opening pot.
 
-    If you cannot find the above options in Privacy & Security, or get error prompts such as broken files with Apple Silicon machines. Open Terminal.app and enter the following command (you may need to enter a password halfway through), then restart pot:
+    If you cannot find the above options in Privacy & Security, or get a message that the file is damaged when launching: open Terminal.app, enter the following command, then restart pot:
 
     ```bash
     sudo xattr -d com.apple.quarantine /Applications/pot.app
     ```
 
--   If you encounter a permission prompt every time you open it, or if you cannot perform a shortcut translation, please go to Settings -> Privacy & Security -> Supporting Features to remove pot, and then re-add pot.
+-   If you encounter a permission prompt every time you open it, or if you cannot perform a shortcut translation, please go to Settings -> Privacy & Security -> Accessibility, remove "pot", and then re-add "pot".
 
 ## Linux
 
 ### Debian/Ubuntu
 
-We provide `deb` packages for Linux.
+1. Download the latest `deb` package for your architecture from the [Release](https://github.com/pot-app/pot-desktop/releases/latest) page.
 
-Please note that: There are two deb package, `universal` is based on `glibc2.28` and `openssl-1.1`, If the regular deb package can't run on your machine due to dependency problems, please download the `universal` package, Due to its low version dependency, it can run on most systems.
+2. Install it with `apt-get`
+
+    ```bash
+    sudo apt-get install ./pot_{version}_amd64.deb
+    ```
 
 ### Arch/Manjaro
 
@@ -258,12 +262,12 @@ Please note that: There are two deb package, `universal` is based on `glibc2.28`
 
 1. View on [AUR](https://aur.archlinux.org/packages?O=0&K=pot-translation)
 
-Use aur helper：
+Use aur helper:
 
 ```bash
-yay -S pot-translation # or pot-translation-bin or pot-translation-git
-# or
-paru -S pot-translation # or pot-translation-bin or pot-translation-git
+yay -S pot-translation # or pot-translation-bin
+
+# paru -S pot-translation # or pot-translation-bin
 ```
 
 2. If you are using `archlinuxcn`, you can install directly using pacman:
@@ -344,7 +348,7 @@ rm ~/.cache/com.pot-app.desktop/pot_screenshot_cut.png && flameshot gui -s -p ~/
 1. Download and install SnipDo in the [Microsoft Store](https://apps.microsoft.com/store/detail/snipdo/9NPZ2TVKJVT7)
 2. Download the SnipDo extension of pot from the Latest [Release](https://github.com/pot-app/pot-desktop/releases/latest) (pot.pbar)
 3. Double click the downloaded file to install it.
-4. Selection some text, you can see the pot icon in the upper right corner of the selection, click the icon to translate.
+4. Select some text and the SnipDo toolbar will pop up; click the translate button to translate.
 
 ### PopClip (MacOS)
 
@@ -355,7 +359,7 @@ rm ~/.cache/com.pot-app.desktop/pot_screenshot_cut.png && flameshot gui -s -p ~/
 
 ### Starry (Linux)
 
-> Starry is still in the development stage, so you can only compile him manually
+> Starry is still in the development stage, so you can only compile it manually
 
 Github: [ccslykx/Starry](https://github.com/ccslykx/Starry)
 
