@@ -1,4 +1,7 @@
+use crate::config::{get, set};
 use crate::window::text_translate;
+use crate::APP;
+use log::info;
 use std::sync::Mutex;
 use tauri::{ClipboardManager, Manager};
 
@@ -30,4 +33,35 @@ pub fn start_clipboard_monitor(app_handle: tauri::AppHandle) {
             std::thread::sleep(std::time::Duration::from_millis(500));
         }
     });
+}
+
+pub fn toggle_clipboard_monitor() {
+    let app_handle = APP.get().unwrap();
+    let enable_clipboard_monitor = match get("clipboard_monitor") {
+        Some(v) => v.as_bool().unwrap(),
+        None => {
+            set("clipboard_monitor", false);
+            false
+        }
+    };
+    let current = !enable_clipboard_monitor;
+    // Update Config File
+    set("clipboard_monitor", current);
+    // Update State and Start Monitor
+    let state = app_handle.state::<ClipboardMonitorEnableWrapper>();
+    state
+        .0
+        .lock()
+        .unwrap()
+        .replace_range(.., &current.to_string());
+    if current {
+        start_clipboard_monitor(app_handle.app_handle());
+    }
+    // Update Tray Menu Status
+    app_handle
+        .tray_handle()
+        .get_item("clipboard_monitor")
+        .set_selected(current)
+        .unwrap();
+    info!("Clipboard Monitor: {}", current);
 }

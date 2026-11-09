@@ -141,32 +141,8 @@ fn on_tray_click() {
 fn on_input_translate_click() {
     input_translate();
 }
-fn on_clipboard_monitor_click(app: &AppHandle) {
-    let enable_clipboard_monitor = match get("clipboard_monitor") {
-        Some(v) => v.as_bool().unwrap(),
-        None => {
-            set("clipboard_monitor", false);
-            false
-        }
-    };
-    let current = !enable_clipboard_monitor;
-    // Update Config File
-    set("clipboard_monitor", current);
-    // Update State and Start Monitor
-    let state = app.state::<ClipboardMonitorEnableWrapper>();
-    state
-        .0
-        .lock()
-        .unwrap()
-        .replace_range(.., &current.to_string());
-    if current {
-        start_clipboard_monitor(app.app_handle());
-    }
-    // Update Tray Menu Status
-    app.tray_handle()
-        .get_item("clipboard_monitor")
-        .set_selected(current)
-        .unwrap();
+fn on_clipboard_monitor_click(_app: &AppHandle) {
+    toggle_clipboard_monitor();
 }
 fn on_auto_copy_click(app: &AppHandle, mode: &str) {
     info!("Set copy mode to: {}", mode);

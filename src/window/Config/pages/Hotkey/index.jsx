@@ -50,6 +50,7 @@ export default function Hotkey() {
     const [inputTranslate, setInputTranslate] = useConfig('hotkey_input_translate', '');
     const [ocrRecognize, setOcrRecognize] = useConfig('hotkey_ocr_recognize', '');
     const [ocrTranslate, setOcrTranslate] = useConfig('hotkey_ocr_translate', '');
+    const [clipboardMonitorHotkey, setClipboardMonitorHotkey] = useConfig('hotkey_clipboard_monitor', '');
 
     const { t } = useTranslation();
     const toastStyle = useToastStyle();
@@ -233,6 +234,37 @@ export default function Hotkey() {
                                     className={`${ocrTranslate === '' && 'hidden'}`}
                                     onPress={() => {
                                         registerHandler('hotkey_ocr_translate', ocrTranslate);
+                                    }}
+                                >
+                                    {t('common.ok')}
+                                </Button>
+                            }
+                        />
+                    )}
+                </div>
+                <div className='config-item'>
+                    <h3 className='my-auto'>{t('config.hotkey.clipboard_monitor')}</h3>
+                    {clipboardMonitorHotkey !== null && (
+                        <Input
+                            type='hotkey'
+                            variant='bordered'
+                            value={clipboardMonitorHotkey}
+                            label={t('config.hotkey.set_hotkey')}
+                            className='max-w-[50%]'
+                            onKeyDown={(e) => {
+                                keyDown(e, setClipboardMonitorHotkey);
+                            }}
+                            onFocus={() => {
+                                unregister(clipboardMonitorHotkey);
+                                setClipboardMonitorHotkey('');
+                            }}
+                            endContent={
+                                <Button
+                                    size='sm'
+                                    variant='flat'
+                                    className={`${clipboardMonitorHotkey === '' && 'hidden'}`}
+                                    onPress={() => {
+                                        registerHandler('hotkey_clipboard_monitor', clipboardMonitorHotkey);
                                     }}
                                 >
                                     {t('common.ok')}

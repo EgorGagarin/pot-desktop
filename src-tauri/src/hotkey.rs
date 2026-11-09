@@ -1,3 +1,4 @@
+use crate::clipboard::toggle_clipboard_monitor;
 use crate::config::{get, set};
 use crate::window::{input_translate, ocr_recognize, ocr_translate, selection_translate};
 use crate::APP;
@@ -54,7 +55,19 @@ pub fn register_shortcut(shortcut: &str) -> Result<(), String> {
         }
         "hotkey_ocr_recognize" => register(app_handle, "hotkey_ocr_recognize", ocr_recognize, "")?,
         "hotkey_ocr_translate" => register(app_handle, "hotkey_ocr_translate", ocr_translate, "")?,
+        "hotkey_clipboard_monitor" => register(
+            app_handle,
+            "hotkey_clipboard_monitor",
+            toggle_clipboard_monitor,
+            "",
+        )?,
         "all" => {
+            register(
+                app_handle,
+                "hotkey_clipboard_monitor",
+                toggle_clipboard_monitor,
+                "",
+            )?;
             register(
                 app_handle,
                 "hotkey_selection_translate",
@@ -64,6 +77,12 @@ pub fn register_shortcut(shortcut: &str) -> Result<(), String> {
             register(app_handle, "hotkey_input_translate", input_translate, "")?;
             register(app_handle, "hotkey_ocr_recognize", ocr_recognize, "")?;
             register(app_handle, "hotkey_ocr_translate", ocr_translate, "")?;
+            register(
+                app_handle,
+                "hotkey_clipboard_monitor",
+                toggle_clipboard_monitor,
+                "",
+            )?;
         }
         _ => {}
     }
@@ -92,6 +111,12 @@ pub fn register_shortcut_by_frontend(name: &str, shortcut: &str) -> Result<(), S
         "hotkey_ocr_translate" => {
             register(app_handle, "hotkey_ocr_translate", ocr_translate, shortcut)?
         }
+        "hotkey_clipboard_monitor" => register(
+            app_handle,
+            "hotkey_clipboard_monitor",
+            toggle_clipboard_monitor,
+            shortcut,
+        )?,
         _ => {}
     }
     Ok(())
