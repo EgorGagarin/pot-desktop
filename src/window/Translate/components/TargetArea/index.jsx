@@ -36,6 +36,7 @@ import { sourceLanguageAtom, targetLanguageAtom } from '../LanguageArea';
 import { useConfig, useToastStyle, useVoice } from '../../../../hooks';
 import { sourceTextAtom, detectLanguageAtom } from '../SourceArea';
 import { invoke_plugin } from '../../../../utils/invoke_plugin';
+import { getCachedTranslation, setCachedTranslation } from '../../../../utils/translate_cache';
 import * as builtinServices from '../../../../services/translate';
 import * as builtinTtsServices from '../../../../services/tts';
 
@@ -77,6 +78,7 @@ export default function TargetArea(props) {
     const [autoCopy] = useConfig('translate_auto_copy', 'disable');
     const [hideWindow] = useConfig('translate_hide_window', false);
     const [clipboardMonitor] = useConfig('clipboard_monitor', false);
+    const [cacheEnabled] = useConfig('translate_cache', true);
 
     const detectLanguage = useAtomValue(detectLanguageAtom);
     const [ttsPluginInfo, setTtsPluginInfo] = useState();
@@ -102,7 +104,8 @@ export default function TargetArea(props) {
             targetLanguage &&
             autoCopy !== null &&
             hideWindow !== null &&
-            clipboardMonitor !== null
+            clipboardMonitor !== null &&
+            cacheEnabled !== null
         ) {
             if (autoCopy === 'source' && !clipboardMonitor) {
                 writeText(sourceText).then(() => {
@@ -121,6 +124,7 @@ export default function TargetArea(props) {
         hideWindow,
         currentTranslateServiceInstanceKey,
         clipboardMonitor,
+        cacheEnabled,
     ]);
 
     // todo: history panel use service instance key
@@ -160,11 +164,60 @@ export default function TargetArea(props) {
         };
     }
 
+    const autoCopyResult = (v) => {
+        if (index !== 0 || clipboardMonitor) {
+            return;
+        }
+        switch (autoCopy) {
+            case 'target':
+                writeText(v).then(() => {
+                    if (hideWindow) {
+                        sendNotification({ title: t('common.write_clipboard'), body: v });
+                    }
+                });
+                break;
+            case 'source_target':
+                writeText(sourceText.trim() + '\n\n' + v).then(() => {
+                    if (hideWindow) {
+                        sendNotification({ title: t('common.write_clipboard'), body: sourceText.trim() + '\n\n' + v });
+                    }
+                });
+                break;
+            default:
+                break;
+        }
+    };
+
     const translate = async () => {
         let id = nanoid();
         translateID[index] = id;
 
         const translateServiceName = getServiceName(currentTranslateServiceInstanceKey);
+
+        // Translation cache (L0 memory, L1 history.db) — instant repeats
+        if (cacheEnabled) {
+            let cachedTarget = targetLanguage;
+            if (sourceLanguage === 'auto' && targetLanguage === detectLanguage) {
+                cachedTarget = translateSecondLanguage;
+            }
+            const cached = await getCachedTranslation(
+                sourceText.trim(),
+                detectLanguage,
+                cachedTarget,
+                currentTranslateServiceInstanceKey,
+                translateServiceName
+            );
+            if (translateID[index] !== id) return;
+            if (cached !== undefined) {
+                setResult(typeof cached === 'string' ? cached.trim() : cached);
+                setIsLoading(false);
+                if (cached !== '') {
+                    setHide(false);
+                }
+                autoCopyResult(cached);
+                return;
+            }
+        }
 
         if (whetherPluginService(currentTranslateServiceInstanceKey)) {
             const pluginInfo = pluginList['translate'][translateServiceName];
@@ -206,29 +259,14 @@ export default function TargetArea(props) {
                                 typeof v === 'string' ? v.trim() : v
                             );
                         }
-                        if (index === 0 && !clipboardMonitor) {
-                            switch (autoCopy) {
-                                case 'target':
-                                    writeText(v).then(() => {
-                                        if (hideWindow) {
-                                            sendNotification({ title: t('common.write_clipboard'), body: v });
-                                        }
-                                    });
-                                    break;
-                                case 'source_target':
-                                    writeText(sourceText.trim() + '\n\n' + v).then(() => {
-                                        if (hideWindow) {
-                                            sendNotification({
-                                                title: t('common.write_clipboard'),
-                                                body: sourceText.trim() + '\n\n' + v,
-                                            });
-                                        }
-                                    });
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
+                        setCachedTranslation(
+                            sourceText.trim(),
+                            detectLanguage,
+                            newTargetLanguage,
+                            currentTranslateServiceInstanceKey,
+                            typeof v === 'string' ? v.trim() : v
+                        );
+                        autoCopyResult(v);
                     },
                     (e) => {
                         info(`[${currentTranslateServiceInstanceKey}]reject:` + e);
@@ -279,29 +317,14 @@ export default function TargetArea(props) {
                                     typeof v === 'string' ? v.trim() : v
                                 );
                             }
-                            if (index === 0 && !clipboardMonitor) {
-                                switch (autoCopy) {
-                                    case 'target':
-                                        writeText(v).then(() => {
-                                            if (hideWindow) {
-                                                sendNotification({ title: t('common.write_clipboard'), body: v });
-                                            }
-                                        });
-                                        break;
-                                    case 'source_target':
-                                        writeText(sourceText.trim() + '\n\n' + v).then(() => {
-                                            if (hideWindow) {
-                                                sendNotification({
-                                                    title: t('common.write_clipboard'),
-                                                    body: sourceText.trim() + '\n\n' + v,
-                                                });
-                                            }
-                                        });
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
+                            setCachedTranslation(
+                                sourceText.trim(),
+                                detectLanguage,
+                                newTargetLanguage,
+                                currentTranslateServiceInstanceKey,
+                                typeof v === 'string' ? v.trim() : v
+                            );
+                            autoCopyResult(v);
                         },
                         (e) => {
                             info(`[${currentTranslateServiceInstanceKey}]reject:` + e);

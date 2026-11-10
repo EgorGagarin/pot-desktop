@@ -33,6 +33,7 @@ export default function SourceArea(props) {
     const { pluginList, serviceInstanceConfigMap } = props;
     const [appFontSize] = useConfig('app_font_size', 16);
     const [sourceText, setSourceText, syncSourceText] = useSyncAtom(sourceTextAtom);
+    const [, writeSourceTextAtom] = useAtom(sourceTextAtom);
     const [detectLanguage, setDetectLanguage] = useAtom(detectLanguageAtom);
     const [incrementalTranslate] = useConfig('incremental_translate', false);
     const [dynamicTranslate] = useConfig('dynamic_translate', false);
@@ -229,6 +230,10 @@ export default function SourceArea(props) {
                 } catch {}
                 if (wasHidden) {
                     setSourceText('');
+                    // Clear the shared atom too: panels clear their results,
+                    // and a following sync with the same text is a real change
+                    // (jotai skips same-value writes on the local state only)
+                    writeSourceTextAtom('');
                 }
                 appWindow.setFocus();
                 handleNewText(event.payload);
