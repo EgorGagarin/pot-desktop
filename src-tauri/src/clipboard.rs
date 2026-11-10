@@ -39,9 +39,16 @@ mod platform {
                         .load(Ordering::Relaxed);
                     if enabled {
                         if let Ok(Some(text)) = app.clipboard_manager().read_text() {
+                            // The window must come up even when the copied text
+                            // is identical to the previous one — dedup only
+                            // matters while the window is already showing it
+                            let window_hidden = match app.get_window("translate") {
+                                Some(w) => !w.is_visible().unwrap_or(false),
+                                None => true,
+                            };
                             // Some clipboard managers re-set identical content
                             let mut pre_text = super::PRE_TEXT.lock().unwrap();
-                            if *pre_text != text {
+                            if window_hidden || *pre_text != text {
                                 info!("Clipboard update received");
                                 *pre_text = text.clone();
                                 text_translate(text);
