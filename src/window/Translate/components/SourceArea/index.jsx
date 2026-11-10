@@ -51,6 +51,7 @@ export default function SourceArea(props) {
 
     const handleNewText = async (text) => {
         text = text.trim();
+        info('new_text handling, JS ready in ' + Math.round(performance.now()) + ' ms');
         if (hideWindow) {
             appWindow.hide();
         } else {
@@ -218,7 +219,17 @@ export default function SourceArea(props) {
                     f();
                 });
             }
-            unlisten = listen('new_text', (event) => {
+            unlisten = listen('new_text', async (event) => {
+                // Hidden window (keep_alive) means a new session: reset the
+                // source so incremental_translate doesn't append to the
+                // previous invocation's text
+                let wasHidden = false;
+                try {
+                    wasHidden = !(await appWindow.isVisible());
+                } catch {}
+                if (wasHidden) {
+                    setSourceText('');
+                }
                 appWindow.setFocus();
                 handleNewText(event.payload);
             });

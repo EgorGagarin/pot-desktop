@@ -25,6 +25,7 @@ use log::info;
 use once_cell::sync::OnceCell;
 use screenshot::screenshot;
 use server::*;
+use std::sync::atomic::AtomicBool;
 use std::sync::Mutex;
 use system_ocr::*;
 use tauri::api::notification::Notification;
@@ -33,6 +34,7 @@ use tauri_plugin_log::LogTarget;
 use tray::*;
 use updater::check_update;
 use window::config_window;
+use window::prewarm_daemon;
 use window::updater_window;
 
 // Global AppHandle
@@ -121,10 +123,13 @@ fn main() {
                     false
                 }
             };
-            app.manage(ClipboardMonitorEnableWrapper(Mutex::new(
-                clipboard_monitor.to_string(),
+            app.manage(ClipboardMonitorEnableWrapper(AtomicBool::new(
+                clipboard_monitor,
             )));
             start_clipboard_monitor(app.handle());
+            // Warm up the WebView2 browser process so the first translate
+            // window opens fast
+            prewarm_daemon();
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

@@ -20,6 +20,8 @@ import { info } from 'tauri-plugin-log-api';
 let blurTimeout = null;
 let resizeTimeout = null;
 let moveTimeout = null;
+// Mirrors the translate_window_keep_alive config for the module-level blur listener
+let keepAliveWindow = false;
 
 const listenBlur = () => {
     return listen('tauri://blur', () => {
@@ -32,7 +34,12 @@ const listenBlur = () => {
             // 如果直接关闭将导致窗口无法拖动
             blurTimeout = setTimeout(async () => {
                 info('Confirm Blur');
-                await appWindow.close();
+                if (keepAliveWindow) {
+                    // Keep the webview alive: hiding makes the next invocation instant
+                    await appWindow.hide();
+                } else {
+                    await appWindow.close();
+                }
             }, 100);
         }
     });
@@ -65,6 +72,7 @@ void listen('tauri://move', () => {
 
 export default function Translate() {
     const [closeOnBlur] = useConfig('translate_close_on_blur', true);
+    const [keepAlive] = useConfig('translate_window_keep_alive', false);
     const [alwaysOnTop] = useConfig('translate_always_on_top', false);
     const [windowPosition] = useConfig('translate_window_position', 'mouse');
     const [rememberWindowSize] = useConfig('translate_remember_window_size', false);
@@ -101,6 +109,10 @@ export default function Translate() {
             unlistenBlur();
         }
     }, [closeOnBlur]);
+    // 是否保留窗口（blur 时隐藏而不是销毁）
+    useEffect(() => {
+        keepAliveWindow = keepAlive === true;
+    }, [keepAlive]);
     // 是否默认置顶
     useEffect(() => {
         if (alwaysOnTop !== null && alwaysOnTop) {
@@ -268,7 +280,11 @@ export default function Translate() {
                         disableAnimation
                         className={`my-auto ${osType === 'Darwin' && 'hidden'} bg-transparent`}
                         onPress={() => {
-                            void appWindow.close();
+                            if (keepAliveWindow) {
+                                void appWindow.hide();
+                            } else {
+                                void appWindow.close();
+                            }
                         }}
                     >
                         <AiFillCloseCircle className='text-[20px] text-default-400' />

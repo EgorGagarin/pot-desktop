@@ -122,7 +122,19 @@ pub fn config_window() {
     window.center().unwrap();
 }
 
-fn translate_window() -> Window {
+// Create the daemon window at startup: the first WebView2 controller of a
+// browser process is the expensive one (0.3-1.7 s), paying it here makes the
+// first translate invocation warm
+pub fn prewarm_daemon() {
+    let start = std::time::Instant::now();
+    get_daemon_window();
+    info!(
+        "Daemon window prewarmed in {} ms",
+        start.elapsed().as_millis()
+    );
+}
+
+fn apply_translate_window_geometry(window: &Window) {
     use mouse_position::mouse_position::{Mouse, Position};
     // Mouse physical position
     let mut mouse_position = match Mouse::get_mouse_position() {
@@ -132,11 +144,6 @@ fn translate_window() -> Window {
             Position { x: 0, y: 0 }
         }
     };
-    let (window, exists) = build_window("translate", "Translate");
-    if exists {
-        return window;
-    }
-    window.set_skip_taskbar(true).unwrap();
     // Get Translate Window Size
     let width = match get("translate_window_width") {
         Some(v) => v.as_i64().unwrap(),
@@ -219,7 +226,29 @@ fn translate_window() -> Window {
                 .unwrap();
         }
     }
+}
 
+fn translate_window() -> Window {
+    let app_handle = APP.get().unwrap();
+    if let Some(window) = app_handle.get_window("translate") {
+        info!("Window existence: {}", window.label());
+        if window.is_visible().unwrap_or(false) {
+            let _ = window.set_focus();
+            return window;
+        }
+        // Hidden by close on blur (keep_alive): re-apply geometry; the
+        // frontend shows the window when it receives the new_text event
+        apply_translate_window_geometry(&window);
+        return window;
+    }
+    let start = std::time::Instant::now();
+    let (window, _exists) = build_window("translate", "Translate");
+    window.set_skip_taskbar(true).unwrap();
+    apply_translate_window_geometry(&window);
+    info!(
+        "Translate window created in {} ms",
+        start.elapsed().as_millis()
+    );
     window
 }
 
